@@ -1,0 +1,17 @@
+[general]
+name=MRUTools
+qgisMinimumVersion=3.44
+description=Ferramentas para gestão e reorganização de MRUs
+version=0.1.0
+author=Dhouglas Oliveira
+email=
+about=Plugin para gestão de agrupamentos de instalações e caminhos frequentes.
+
+tracker=
+repository=
+homepage=
+
+category=Plugins
+icon=icon.png
+experimental=False
+deprecated=False
