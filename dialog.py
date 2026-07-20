@@ -21,6 +21,7 @@ class MRUDockWidget(QDockWidget):
         self._cached_counts: dict[str, int] = {}
         self._cached_layer_id: str | None = None
         self._cached_mru_field: str | None = None
+        self._cached_selected_count: int = 0
         self._iface = None
         self.refresh_summary(force_reload=True)
 
@@ -63,7 +64,7 @@ class MRUDockWidget(QDockWidget):
         self.apply_button.clicked.connect(self.apply_selected_mru)
         self.repeat_button.clicked.connect(self.repeat_last_mru)
         self.undo_button.clicked.connect(self.undo_last_movement)
-        self.mru_combo.currentTextChanged.connect(self.refresh_summary)
+        self.mru_combo.currentTextChanged.connect(self._update_text_input_state)
         if self.mru_combo.lineEdit() is not None:
             self.mru_combo.lineEdit().returnPressed.connect(self.apply_selected_mru)
 
@@ -124,6 +125,34 @@ class MRUDockWidget(QDockWidget):
         self._cached_counts = {}
         self._cached_layer_id = None
         self._cached_mru_field = None
+        self._cached_selected_count = 0
+
+    def _update_text_input_state(self) -> None:
+        destination_value = self.mru_combo.currentText().strip()
+        self.destination_label.setText(f"MRU destino: {destination_value or '-'}")
+
+        destination_count = self._cached_counts.get(destination_value, 0) if destination_value else 0
+        self.destination_count_label.setText(
+            f"Quantidade atual da MRU destino: {destination_count}"
+        )
+
+        if self._cached_selected_count and destination_value:
+            result_text = (
+                f"Origem: {self._cached_selected_count} instalação(ões) movida(s); "
+                f"Destino: {destination_count + self._cached_selected_count}"
+            )
+            self.apply_button.setEnabled(True)
+            self._set_status("Pronto para aplicar a nova MRU.")
+        elif self._cached_selected_count:
+            result_text = "Selecione uma MRU destino e pelo menos uma feição."
+            self.apply_button.setEnabled(False)
+            self._set_status("Escolha uma MRU destino para continuar.")
+        else:
+            result_text = "Selecione uma MRU destino e pelo menos uma feição."
+            self.apply_button.setEnabled(False)
+            self._set_status("Selecione pelo menos uma feição para alterar a MRU.")
+
+        self.result_label.setText(f"Após a movimentação: {result_text}")
 
     def _load_cached_mru_data(self, layer: Optional[QgsVectorLayer], force_reload: bool = False) -> None:
         if layer is None:
@@ -205,6 +234,7 @@ class MRUDockWidget(QDockWidget):
 
         selected_ids = layer.selectedFeatureIds()
         selected_count = len(selected_ids)
+        self._cached_selected_count = selected_count
         self.selection_value_label.setText(str(selected_count))
 
         source_values: list[str] = []
@@ -228,33 +258,13 @@ class MRUDockWidget(QDockWidget):
             total_text = "0"
         self.total_label.setText(f"Total da MRU origem: {total_text}")
 
-        destination_value = self.mru_combo.currentText().strip()
-        self.destination_label.setText(f"MRU destino: {destination_value or '-'}")
-
-        destination_count = self._cached_counts.get(destination_value, 0) if destination_value else 0
-        self.destination_count_label.setText(
-            f"Quantidade atual da MRU destino: {destination_count}"
-        )
-
-        if selected_count and destination_value:
-            result_text = f"Origem: {selected_count} instalação(ões) movida(s); Destino: {destination_count + selected_count}"
-        else:
-            result_text = "Selecione uma MRU destino e pelo menos uma feição."
-        self.result_label.setText(f"Após a movimentação: {result_text}")
-
         if force_reload or self.mru_combo.count() == 0:
             self._populate_combo_values(self._cached_mru_values)
 
         last_mru = self._load_recent_mrus()[0] if self._load_recent_mrus() else ""
         self.last_mru_label.setText(f"Última MRU: {last_mru or '-'}")
 
-        self.apply_button.setEnabled(selected_count > 0 and bool(destination_value))
-        if selected_count > 0 and destination_value:
-            self._set_status("Pronto para aplicar a nova MRU.")
-        elif selected_count > 0:
-            self._set_status("Escolha uma MRU destino para continuar.")
-        else:
-            self._set_status("Selecione pelo menos uma feição para alterar a MRU.")
+        self._update_text_input_state()
 
     def apply_selected_mru(self) -> None:
         layer = self._get_active_layer()
