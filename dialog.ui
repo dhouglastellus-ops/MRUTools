@@ -64,14 +64,14 @@
       <item>
        <widget class="QLabel" name="origin_label">
         <property name="text">
-         <string>MRU de origem:</string>
+         <string>MRU original:</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="total_label">
         <property name="text">
-         <string>Total da MRU origem:</string>
+         <string>MRU resultado:</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -134,6 +134,43 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QGroupBox" name="project_group">
+        <property name="title">
+         <string>PROJETO</string>
+        </property>
+        <layout class="QGridLayout" name="project_layout">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="start_project_button">
+           <property name="text">
+            <string>Iniciar Projeto</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="restore_project_button">
+           <property name="text">
+            <string>Restaurar Projeto</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="cancel_project_button">
+           <property name="text">
+            <string>Cancelar Projeto</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="export_project_button">
+           <property name="text">
+            <string>Exportar Projeto</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -146,7 +183,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="destination_count_label">
         <property name="text">
-         <string>Quantidade atual da MRU destino:</string>
+         <string>Quantidade atual:</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -156,7 +193,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="result_label">
         <property name="text">
-         <string>Após a movimentação:</string>
+         <string>Quantidade prevista:</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
