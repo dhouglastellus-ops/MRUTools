@@ -8,6 +8,47 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QCompleter, QDockWidget, QFileDialog, QMessageBox, QWidget
 
+try:
+    from qgis.PyQt.QtCore import QVariant
+except ImportError:  # pragma: no cover - compatibilidade com versões sem QVariant
+    QVariant = None
+
+try:
+    from qgis.core import QgsNullVariant
+except ImportError:  # pragma: no cover - compatibilidade com versões sem QgsNullVariant
+    QgsNullVariant = None
+
+
+def excel_value(value):
+    if value is None:
+        return None
+
+    if QgsNullVariant is not None and isinstance(value, QgsNullVariant):
+        return None
+
+    if QVariant is not None and isinstance(value, QVariant):
+        if value.isNull():
+            return None
+        return excel_value(value.value())
+
+    if hasattr(value, "isNull") and callable(getattr(value, "isNull")):
+        try:
+            if value.isNull():
+                return None
+        except Exception:
+            pass
+
+    if hasattr(value, "value") and callable(getattr(value, "value")):
+        try:
+            return excel_value(value.value())
+        except Exception:
+            pass
+
+    if str(value) == "NULL":
+        return None
+
+    return value
+
 
 class MRUDockWidget(QDockWidget):
     def __init__(self, parent: Optional[QWidget] = None, manager: Optional[object] = None) -> None:
@@ -428,14 +469,14 @@ class MRUDockWidget(QDockWidget):
 
         fields = list(layer.fields())
         headers = [field.name() for field in fields]
-        ws.append(headers)
+        ws.append([excel_value(value) for value in headers])
 
         for feature in layer.getFeatures():
             row = []
             for field in fields:
                 value = feature[field.name()]
                 row.append(value)
-            ws.append(row)
+            ws.append([excel_value(value) for value in row])
 
         if not file_path.lower().endswith(".xlsx"):
             file_path = f"{file_path}.xlsx"
