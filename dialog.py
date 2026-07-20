@@ -468,14 +468,30 @@ class MRUDockWidget(QDockWidget):
         ws.title = "dados"
 
         fields = list(layer.fields())
-        headers = [field.name() for field in fields]
-        ws.append([excel_value(value) for value in headers])
+        original_field_names = [field.name() for field in fields]
+        export_field_names = list(original_field_names)
+        result_field = self._find_result_field(layer)
+
+        if result_field is not None and result_field in export_field_names:
+            insert_index = export_field_names.index(result_field) + 1
+            export_field_names.insert(insert_index, "ALTERADO")
+        else:
+            export_field_names.append("ALTERADO")
+
+        ws.append([excel_value(value) for value in export_field_names])
 
         for feature in layer.getFeatures():
-            row = []
-            for field in fields:
-                value = feature[field.name()]
-                row.append(value)
+            original_values = [feature[field.name()] for field in fields]
+            if result_field is not None and result_field in original_field_names:
+                original_value = feature[result_field]
+                mru_value = feature[self._find_mru_field(layer)] if self._find_mru_field(layer) is not None else None
+                original_text = "" if mru_value is None else str(mru_value).strip()
+                result_text = "" if original_value is None else str(original_value).strip()
+                altered_value = "Não" if original_text == result_text else "Sim"
+                insert_index = original_field_names.index(result_field) + 1
+                row = original_values[:insert_index] + [altered_value] + original_values[insert_index:]
+            else:
+                row = original_values + ["Sim"]
             ws.append([excel_value(value) for value in row])
 
         if not file_path.lower().endswith(".xlsx"):
